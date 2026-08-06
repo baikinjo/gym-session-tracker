@@ -1,0 +1,801 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Gym Log">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <title>Gym Session Tracker</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090d16;
+      --panel: #111827;
+      --panel-2: #182235;
+      --line: #2a3850;
+      --text: #f8fafc;
+      --muted: #9fb0c8;
+      --accent: #a3e635;
+      --accent-dark: #1f2c17;
+      --danger: #fb7185;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.35 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    .app {
+      width: min(100%, 760px);
+      margin: 0 auto;
+      padding: calc(16px + env(safe-area-inset-top)) 14px calc(32px + env(safe-area-inset-bottom));
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 2px; font-size: 1.45rem; }
+    h2 { margin-bottom: 12px; font-size: 1.1rem; }
+    .muted { color: var(--muted); }
+    .small { font-size: .82rem; }
+
+    .card {
+      margin-bottom: 12px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    label {
+      display: grid;
+      gap: 5px;
+      color: var(--muted);
+      font-size: .82rem;
+      font-weight: 650;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      min-height: 42px;
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      outline: none;
+      background: #0c1321;
+      color: var(--text);
+    }
+
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+    textarea { min-height: 72px; resize: vertical; }
+
+    button {
+      min-height: 42px;
+      padding: 9px 13px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: var(--panel-2);
+      color: var(--text);
+      font-weight: 750;
+      cursor: pointer;
+    }
+
+    button.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #15200c;
+    }
+
+    button.danger { color: var(--danger); }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .timer {
+      color: var(--accent);
+      font-size: 1.45rem;
+      font-variant-numeric: tabular-nums;
+      font-weight: 800;
+    }
+
+    .timer-stack { text-align: right; }
+
+    .rest-timer {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: .78rem;
+      font-variant-numeric: tabular-nums;
+      font-weight: 750;
+    }
+
+    .rest-timer.active { color: var(--accent); }
+    .rest-timer.complete { color: #67e8f9; }
+
+    .rest-clear {
+      min-height: 0;
+      margin-top: 3px;
+      padding: 2px 7px;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-size: .7rem;
+    }
+
+    .exercise {
+      margin-bottom: 10px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: #0c1321;
+    }
+
+    .exercise:last-child { margin-bottom: 0; }
+
+    .exercise-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 9px;
+    }
+
+    .exercise-name { font-weight: 800; }
+    .target { color: var(--accent); font-size: .78rem; white-space: nowrap; }
+    .previous { margin-top: 3px; color: var(--muted); font-size: .75rem; }
+
+    .set-grid {
+      display: grid;
+      grid-template-columns: 1.25fr repeat(3, .7fr) .7fr;
+      gap: 6px;
+      align-items: end;
+    }
+
+    .set-grid label { text-align: center; }
+    .set-grid input { min-width: 0; padding-inline: 6px; text-align: center; }
+    .set-grid label:first-child { text-align: left; }
+
+    .set-actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .set-actions button {
+      min-height: 36px;
+      padding: 6px;
+      font-size: .76rem;
+    }
+
+    .set-actions button.completed {
+      border-color: var(--accent);
+      background: var(--accent-dark);
+      color: var(--accent);
+    }
+
+    .summary {
+      display: none;
+      background: #fff;
+      color: #111827;
+    }
+
+    .summary.visible { display: block; }
+    .summary .muted { color: #526079; }
+
+    .summary-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 2px solid #111827;
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+    }
+
+    .summary h2 { margin-bottom: 2px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .74rem;
+    }
+
+    th, td {
+      padding: 5px 3px;
+      border-bottom: 1px solid #d9dee7;
+      text-align: center;
+    }
+
+    th:first-child, td:first-child { text-align: left; }
+
+    .summary-notes {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px;
+      margin-top: 9px;
+      font-size: .74rem;
+    }
+
+    .summary-notes div {
+      padding: 7px;
+      border-radius: 8px;
+      background: #eef2f7;
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 520px) {
+      .grid { grid-template-columns: 1fr; }
+      .set-grid { grid-template-columns: 1.2fr repeat(3, .72fr) .72fr; }
+      .app { padding-inline: 10px; }
+      .card { padding: 11px; }
+    }
+
+    @media print {
+      body { background: #fff; }
+      .app { width: 100%; padding: 0; }
+      body.summary-mode > .app > :not(.summary) { display: none !important; }
+      .summary { display: block; border: 0; margin: 0; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <h1>Gym Session Tracker</h1>
+        <div class="muted small">Autosaves on this device</div>
+      </div>
+      <div class="timer-stack">
+        <div id="timer" class="timer">00:00:00</div>
+        <div id="restTimer" class="rest-timer">No rest timer</div>
+        <button id="restClear" class="rest-clear hidden">Clear rest timer</button>
+      </div>
+    </header>
+
+    <section class="card">
+      <div class="grid">
+        <label>
+          Session
+          <select id="sessionType">
+            <option value="A">A - Upper</option>
+            <option value="B">B - Full Body A</option>
+            <option value="C">C - Full Body B</option>
+          </select>
+        </label>
+        <label>
+          Training phase
+          <select id="phase">
+            <option value="reentry">Weeks 1-2: 2 sets, 3 RIR</option>
+            <option value="normal">Week 3+: planned sets</option>
+          </select>
+        </label>
+        <label>
+          Date
+          <input id="sessionDate" type="date">
+        </label>
+        <label>
+          Session RPE
+          <input id="sessionRpe" type="number" min="1" max="10" inputmode="numeric" placeholder="1-10">
+        </label>
+      </div>
+      <div class="actions" style="margin-top: 10px">
+        <button id="timerToggle" class="primary">Start timer</button>
+        <button id="timerReset">Reset timer</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 id="sessionTitle">Session B - Full Body A</h2>
+      <div id="exerciseList"></div>
+    </section>
+
+    <section class="card">
+      <h2>Session notes</h2>
+      <div class="grid">
+        <label>
+          Readiness / prior run
+          <input id="readiness" placeholder="Normal, tired, prior run effect">
+        </label>
+        <label>
+          Pain or soreness
+          <input id="pain" placeholder="None, location and severity">
+        </label>
+      </div>
+      <label style="margin-top: 10px">
+        Notes
+        <textarea id="sessionNotes" placeholder="Technique, equipment, unusual fatigue..."></textarea>
+      </label>
+    </section>
+
+    <section class="card">
+      <div class="actions">
+        <button id="finish" class="primary">Finish and show summary</button>
+        <button id="saveSession">Save completed session</button>
+        <button id="newSession" class="danger">Clear draft</button>
+      </div>
+      <p class="muted small" style="margin: 10px 0 0">
+        Save only after the workout is complete. The latest matching session appears as “Previous” above each exercise.
+      </p>
+    </section>
+
+    <section id="summary" class="card summary" aria-live="polite">
+      <div class="summary-header">
+        <div>
+          <h2 id="summaryTitle"></h2>
+          <div id="summaryDate" class="muted small"></div>
+        </div>
+        <div style="text-align:right">
+          <strong id="summaryDuration"></strong>
+          <div id="summaryRpe" class="muted small"></div>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Exercise</th>
+            <th>Load</th>
+            <th>S1</th>
+            <th>S2</th>
+            <th>S3</th>
+            <th>RIR</th>
+          </tr>
+        </thead>
+        <tbody id="summaryBody"></tbody>
+      </table>
+      <div class="summary-notes">
+        <div><strong>Readiness</strong><br><span id="summaryReadiness"></span></div>
+        <div><strong>Pain/soreness</strong><br><span id="summaryPain"></span></div>
+        <div style="grid-column: 1 / -1"><strong>Notes</strong><br><span id="summaryNotes"></span></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Backup</h2>
+      <div class="actions">
+        <button id="exportData">Export JSON</button>
+        <button id="importData">Import JSON</button>
+        <input id="importFile" class="hidden" type="file" accept="application/json">
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const plans = {
+      A: {
+        title: "Session A - Upper",
+        exercises: [
+          ["Dumbbell or Smith bench press", "6-10", 3, "Machine chest press", "2-3 min", 180],
+          ["Chest-supported dumbbell or machine row", "8-12", 3, "Seated cable row", "2 min", 120],
+          ["Seated dumbbell shoulder press", "8-12", 2, "Machine shoulder press", "90-120 sec", 120],
+          ["Lat pulldown", "8-12", 2, "Assisted pull-up", "90-120 sec", 120],
+          ["Dumbbell/cable curl", "10-15", 2, "Machine curl", "60-90 sec", 90],
+          ["Cable triceps pressdown", "10-15", 2, "Dumbbell overhead extension", "60-90 sec", 90]
+        ]
+      },
+      B: {
+        title: "Session B - Full Body A",
+        exercises: [
+          ["Smith or barbell squat", "6-10", 3, "Leg press", "2-3 min", 180],
+          ["Incline dumbbell press", "8-12", 3, "Smith incline press", "2 min", 120],
+          ["Lat pulldown or machine row", "8-12", 3, "Chest-supported dumbbell row", "90-120 sec", 120],
+          ["Smith or dumbbell Romanian deadlift", "8-10", 3, "Machine leg curl", "2-3 min", 180],
+          ["Dumbbell lateral raise", "12-20", 2, "Cable lateral raise", "60 sec", 60],
+          ["Standing calf raise", "10-20", 2, "Leg-press calf raise", "60 sec", 60]
+        ]
+      },
+      C: {
+        title: "Session C - Full Body B",
+        exercises: [
+          ["Leg press", "8-12", 3, "Bulgarian split squat", "2-3 min", 180],
+          ["Machine or dumbbell chest press", "8-12", 3, "Smith bench press", "2 min", 120],
+          ["Chest-supported dumbbell or machine row", "8-12", 3, "Seated cable row", "2 min", 120],
+          ["Machine leg curl", "10-15", 3, "Dumbbell Romanian deadlift", "90 sec", 90],
+          ["Machine leg extension", "10-15", 2, "Goblet squat", "60-90 sec", 90],
+          ["Plank, cable crunch, or ab wheel", "Controlled", 2, "Any controlled trunk exercise", "60 sec", 60]
+        ]
+      }
+    };
+
+    const draftKey = "gym-tracker-draft-v1";
+    const historyKey = "gym-tracker-history-v1";
+    const timerKey = "gym-tracker-timer-v1";
+    const restKey = "gym-tracker-rest-v1";
+    const $ = (id) => document.getElementById(id);
+    const text = (value, fallback = "-") => String(value || "").trim() || fallback;
+
+    let timerState = JSON.parse(localStorage.getItem(timerKey) || '{"running":false,"elapsed":0,"startedAt":null}');
+    let restState = JSON.parse(localStorage.getItem(restKey) || '{"endAt":null,"label":"","notified":false}');
+
+    function today() {
+      const date = new Date();
+      return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    }
+
+    function currentElapsed() {
+      if (!timerState.running) return timerState.elapsed;
+      return timerState.elapsed + Date.now() - timerState.startedAt;
+    }
+
+    function formatDuration(ms) {
+      const total = Math.max(0, Math.floor(ms / 1000));
+      const hours = String(Math.floor(total / 3600)).padStart(2, "0");
+      const minutes = String(Math.floor((total % 3600) / 60)).padStart(2, "0");
+      const seconds = String(total % 60).padStart(2, "0");
+      return `${hours}:${minutes}:${seconds}`;
+    }
+
+    function updateTimer() {
+      $("timer").textContent = formatDuration(currentElapsed());
+      $("timerToggle").textContent = timerState.running ? "Pause timer" : "Start timer";
+    }
+
+    function updateRestTimer() {
+      if (!restState.endAt) {
+        $("restTimer").textContent = "No rest timer";
+        $("restTimer").className = "rest-timer";
+        $("restClear").classList.add("hidden");
+        return;
+      }
+
+      const remaining = Math.max(0, restState.endAt - Date.now());
+      $("restClear").classList.remove("hidden");
+      if (remaining > 0) {
+        $("restTimer").textContent = `${restState.label}: ${formatDuration(remaining).slice(3)}`;
+        $("restTimer").className = "rest-timer active";
+        return;
+      }
+
+      $("restTimer").textContent = `${restState.label}: rest complete`;
+      $("restTimer").className = "rest-timer complete";
+      if (!restState.notified) {
+        restState.notified = true;
+        localStorage.setItem(restKey, JSON.stringify(restState));
+        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+      }
+    }
+
+    function startRest(exerciseIndex, setIndex) {
+      const plan = plans[draft.type].exercises[exerciseIndex];
+      const seconds = plan[5];
+      const exercise = draft.exercises[exerciseIndex];
+      exercise.done = exercise.done || [false, false, false];
+      exercise.done[setIndex] = true;
+      restState = {
+        endAt: Date.now() + seconds * 1000,
+        label: `${exercise.name} S${setIndex + 1}`,
+        notified: false
+      };
+      localStorage.setItem(restKey, JSON.stringify(restState));
+      saveDraft();
+      renderExercises();
+      updateRestTimer();
+    }
+
+    function toggleSetCompletion(exerciseIndex, setIndex) {
+      const exercise = draft.exercises[exerciseIndex];
+      exercise.done = exercise.done || [false, false, false];
+
+      if (exercise.done[setIndex]) {
+        exercise.done[setIndex] = false;
+        if (restState.label === `${exercise.name} S${setIndex + 1}`) clearRestTimer();
+        saveDraft();
+        renderExercises();
+        return;
+      }
+
+      startRest(exerciseIndex, setIndex);
+    }
+
+    function clearRestTimer() {
+      restState = { endAt: null, label: "", notified: false };
+      localStorage.setItem(restKey, JSON.stringify(restState));
+      updateRestTimer();
+    }
+
+    function persistTimer() {
+      localStorage.setItem(timerKey, JSON.stringify(timerState));
+      updateTimer();
+    }
+
+    function toggleTimer() {
+      if (timerState.running) {
+        timerState.elapsed = currentElapsed();
+        timerState.running = false;
+        timerState.startedAt = null;
+      } else {
+        timerState.running = true;
+        timerState.startedAt = Date.now();
+      }
+      persistTimer();
+    }
+
+    function resetTimer() {
+      timerState = { running: false, elapsed: 0, startedAt: null };
+      persistTimer();
+    }
+
+    function history() {
+      return JSON.parse(localStorage.getItem(historyKey) || "[]");
+    }
+
+    function previousSession(type) {
+      return history().find((entry) => entry.type === type);
+    }
+
+    function blankExercise([name]) {
+      return { name, load: "", reps: ["", "", ""], rir: "", notes: "", done: [false, false, false] };
+    }
+
+    function defaultDraft(type = "B") {
+      return {
+        type,
+        phase: "reentry",
+        date: today(),
+        sessionRpe: "",
+        readiness: "",
+        pain: "",
+        notes: "",
+        exercises: plans[type].exercises.map(blankExercise)
+      };
+    }
+
+    function loadDraft() {
+      const saved = JSON.parse(localStorage.getItem(draftKey) || "null");
+      if (!saved || !plans[saved.type]) return defaultDraft();
+
+      return {
+        ...saved,
+        exercises: plans[saved.type].exercises.map((planExercise, index) => {
+          const existing = saved.exercises?.[index] || {};
+          return {
+            ...blankExercise(planExercise),
+            ...existing,
+            name: planExercise[0],
+            reps: Array.isArray(existing.reps) ? existing.reps : ["", "", ""],
+            done: Array.isArray(existing.done) ? existing.done : [false, false, false]
+          };
+        })
+      };
+    }
+
+    let draft = loadDraft();
+
+    function activeSetCount(exerciseIndex) {
+      if (draft.phase === "reentry") return 2;
+      return plans[draft.type].exercises[exerciseIndex][2];
+    }
+
+    function renderExercises() {
+      const previous = previousSession(draft.type);
+      $("sessionTitle").textContent = plans[draft.type].title;
+      $("exerciseList").innerHTML = draft.exercises.map((exercise, index) => {
+        const prior = previous?.exercises?.find((item) => item.name === exercise.name);
+        const priorText = prior
+          ? `${text(prior.load)} · ${prior.reps.filter(Boolean).join("/")} reps · RIR ${text(prior.rir)}`
+          : "No prior session";
+        const setCount = activeSetCount(index);
+        return `
+          <div class="exercise" data-index="${index}">
+            <div class="exercise-head">
+              <div>
+                <div class="exercise-name">${exercise.name}</div>
+                <div class="previous">Alternative: ${plans[draft.type].exercises[index][3]}</div>
+                <div class="previous">Previous: ${priorText}</div>
+              </div>
+              <div class="target">${plans[draft.type].exercises[index][1]} reps · ${draft.phase === "reentry" ? "3" : plans[draft.type].exercises[index][2] === 3 ? "2-3" : "1-2"} RIR<br>Rest ${plans[draft.type].exercises[index][4]}</div>
+            </div>
+            <div class="set-grid">
+              <label>Load<input data-field="load" value="${exercise.load}" placeholder="kg/lb"></label>
+              ${[0, 1, 2].map((set) => `
+                <label class="${set >= setCount ? "hidden" : ""}">S${set + 1}
+                  <input data-rep="${set}" type="number" min="0" inputmode="numeric" value="${exercise.reps[set]}" placeholder="-">
+                </label>
+              `).join("")}
+              <label>RIR<input data-field="rir" type="number" min="0" max="10" inputmode="numeric" value="${exercise.rir}" placeholder="3"></label>
+            </div>
+            <div class="set-actions">
+              ${[0, 1, 2].map((set) => `
+                <button
+                  class="${set >= setCount ? "hidden" : ""} ${exercise.done?.[set] ? "completed" : ""}"
+                  data-finish-set="${set}"
+                  type="button"
+                >${exercise.done?.[set] ? `Undo S${set + 1}` : `Finish S${set + 1}`}</button>
+              `).join("")}
+            </div>
+            <label style="margin-top:8px">Exercise notes
+              <input data-field="notes" value="${exercise.notes}" placeholder="Form, setup, pain...">
+            </label>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function syncForm() {
+      $("sessionType").value = draft.type;
+      $("phase").value = draft.phase;
+      $("sessionDate").value = draft.date;
+      $("sessionRpe").value = draft.sessionRpe;
+      $("readiness").value = draft.readiness;
+      $("pain").value = draft.pain;
+      $("sessionNotes").value = draft.notes;
+      renderExercises();
+    }
+
+    function saveDraft() {
+      localStorage.setItem(draftKey, JSON.stringify(draft));
+    }
+
+    function changeSession(type) {
+      draft = defaultDraft(type);
+      saveDraft();
+      syncForm();
+      hideSummary();
+    }
+
+    function collectSummary() {
+      const elapsed = currentElapsed();
+      $("summaryTitle").textContent = plans[draft.type].title;
+      $("summaryDate").textContent = draft.date;
+      $("summaryDuration").textContent = formatDuration(elapsed);
+      $("summaryRpe").textContent = `Session RPE: ${text(draft.sessionRpe)}`;
+      $("summaryReadiness").textContent = text(draft.readiness);
+      $("summaryPain").textContent = text(draft.pain, "None reported");
+      $("summaryNotes").textContent = text(draft.notes);
+      $("summaryBody").innerHTML = draft.exercises.map((exercise, index) => {
+        const setCount = activeSetCount(index);
+        const reps = exercise.reps.map((rep, set) => set < setCount ? text(rep) : "-");
+        return `
+          <tr>
+            <td>${exercise.name}</td>
+            <td>${text(exercise.load)}</td>
+            <td>${reps[0]}</td>
+            <td>${reps[1]}</td>
+            <td>${reps[2]}</td>
+            <td>${text(exercise.rir)}</td>
+          </tr>
+        `;
+      }).join("");
+      $("summary").classList.add("visible");
+      $("summary").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function hideSummary() {
+      $("summary").classList.remove("visible");
+    }
+
+    function saveCompletedSession() {
+      const completed = {
+        ...draft,
+        durationMs: currentElapsed(),
+        savedAt: new Date().toISOString()
+      };
+      const updated = [completed, ...history()].slice(0, 100);
+      localStorage.setItem(historyKey, JSON.stringify(updated));
+      collectSummary();
+      alert("Session saved on this device.");
+    }
+
+    function clearDraft() {
+      if (!confirm("Clear the current draft and timer?")) return;
+      draft = defaultDraft(draft.type);
+      localStorage.setItem(draftKey, JSON.stringify(draft));
+      resetTimer();
+      clearRestTimer();
+      syncForm();
+      hideSummary();
+    }
+
+    function exportData() {
+      const data = {
+        exportedAt: new Date().toISOString(),
+        draft,
+        history: history()
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `gym-tracker-${today()}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    async function importData(file) {
+      const data = JSON.parse(await file.text());
+      if (!Array.isArray(data.history) || !data.draft) throw new Error("Invalid backup file");
+      localStorage.setItem(historyKey, JSON.stringify(data.history));
+      localStorage.setItem(draftKey, JSON.stringify(data.draft));
+      draft = loadDraft();
+      syncForm();
+      alert("Backup imported.");
+    }
+
+    $("timerToggle").addEventListener("click", toggleTimer);
+    $("timerReset").addEventListener("click", resetTimer);
+    $("restClear").addEventListener("click", clearRestTimer);
+    $("finish").addEventListener("click", collectSummary);
+    $("saveSession").addEventListener("click", saveCompletedSession);
+    $("newSession").addEventListener("click", clearDraft);
+    $("exportData").addEventListener("click", exportData);
+    $("importData").addEventListener("click", () => $("importFile").click());
+    $("importFile").addEventListener("change", (event) => {
+      const [file] = event.target.files;
+      if (file) importData(file).catch((error) => alert(error.message));
+      event.target.value = "";
+    });
+
+    $("sessionType").addEventListener("change", (event) => changeSession(event.target.value));
+    $("phase").addEventListener("change", (event) => {
+      draft.phase = event.target.value;
+      saveDraft();
+      renderExercises();
+    });
+
+    [
+      ["sessionDate", "date"],
+      ["sessionRpe", "sessionRpe"],
+      ["readiness", "readiness"],
+      ["pain", "pain"],
+      ["sessionNotes", "notes"]
+    ].forEach(([id, field]) => {
+      $(id).addEventListener("input", (event) => {
+        draft[field] = event.target.value;
+        saveDraft();
+      });
+    });
+
+    $("exerciseList").addEventListener("input", (event) => {
+      const exerciseElement = event.target.closest(".exercise");
+      if (!exerciseElement) return;
+      const exercise = draft.exercises[Number(exerciseElement.dataset.index)];
+      if (event.target.dataset.field) exercise[event.target.dataset.field] = event.target.value;
+      if (event.target.dataset.rep !== undefined) exercise.reps[Number(event.target.dataset.rep)] = event.target.value;
+      saveDraft();
+    });
+
+    $("exerciseList").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-finish-set]");
+      if (!button) return;
+      const exerciseElement = button.closest(".exercise");
+      toggleSetCompletion(Number(exerciseElement.dataset.index), Number(button.dataset.finishSet));
+    });
+
+    setInterval(() => {
+      updateTimer();
+      updateRestTimer();
+    }, 1000);
+    syncForm();
+    updateTimer();
+    updateRestTimer();
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    }
+  </script>
+</body>
+</html>
