@@ -69,6 +69,8 @@
       gap: 10px;
     }
 
+    .grid > * { min-width: 0; }
+
     label {
       display: grid;
       gap: 5px;
@@ -79,6 +81,8 @@
 
     input, select, textarea {
       width: 100%;
+      min-width: 0;
+      max-width: 100%;
       min-height: 42px;
       padding: 9px 10px;
       border: 1px solid var(--line);
@@ -86,7 +90,10 @@
       outline: none;
       background: #0c1321;
       color: var(--text);
+      font-size: 16px;
     }
+
+    input[type="date"] { display: block; }
 
     input:focus, select:focus, textarea:focus { border-color: var(--accent); }
     textarea { min-height: 72px; resize: vertical; }
