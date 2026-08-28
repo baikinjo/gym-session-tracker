@@ -289,16 +289,18 @@
         <label>
           Session
           <select id="sessionType">
-            <option value="A">A - Upper</option>
-            <option value="B">B - Full Body A</option>
-            <option value="C">C - Full Body B</option>
+            <option value="A">Full Body A - Tuesday</option>
+            <option value="B">Full Body B - Thursday</option>
           </select>
         </label>
         <label>
           Training phase
           <select id="phase">
-            <option value="reentry">Weeks 1-2: 2 sets, 3 RIR</option>
-            <option value="normal">Week 3+: planned sets</option>
+            <option value="week1">Week 1: priming</option>
+            <option value="week2">Week 2: restore two sets</option>
+            <option value="week3">Week 3: volume ramp</option>
+            <option value="normal">Weeks 4-5: normal training</option>
+            <option value="taper">Week 6: TT taper</option>
           </select>
         </label>
         <label>
@@ -317,7 +319,8 @@
     </section>
 
     <section class="card">
-      <h2 id="sessionTitle">Session B - Full Body A</h2>
+      <h2 id="sessionTitle">Full Body A - Tuesday</h2>
+      <p id="phaseNote" class="muted small"></p>
       <div id="exerciseList"></div>
     </section>
 
@@ -392,43 +395,193 @@
   </main>
 
   <script>
+    const programId = "fresh-start-2026";
+    const phases = {
+      week1: {
+        note: "Upper body uses 2 sets; squat, Romanian deadlift, leg press, and leg curl use 1 set. Keep 4-5 RIR, use conservative loads, and do not progress."
+      },
+      week2: {
+        note: "Use 2 sets for every exercise at 3-4 RIR. Hold the load if Week 1 caused more than mild soreness."
+      },
+      week3: {
+        note: "Use listed upper-body sets; keep the four lower-body compounds at 2 sets. Compounds stay at 3 RIR and accessories at 2-3 RIR."
+      },
+      normal: {
+        note: "Use the listed sets and RIR. Double progression applies only after two consecutive top-of-range exposures."
+      },
+      taper: {
+        note: "Tuesday Full Body A uses 1-2 sets at 4 RIR with no more than the prior load. Thursday Full Body B is skipped."
+      }
+    };
+
     const plans = {
       A: {
-        title: "Session A - Upper",
+        title: "Full Body A - Tuesday",
         exercises: [
-          ["Dumbbell or Smith bench press", "6-10", 3, "Machine chest press", "2-3 min", 180],
-          ["Chest-supported dumbbell or machine row", "8-12", 3, "Seated cable row", "2 min", 120],
-          ["Seated dumbbell shoulder press", "8-12", 2, "Machine shoulder press", "90-120 sec", 120],
-          ["Lat pulldown", "8-12", 2, "Assisted pull-up", "90-120 sec", 120],
-          ["Dumbbell/cable curl", "10-15", 2, "Machine curl", "60-90 sec", 90],
-          ["Cable triceps pressdown", "10-15", 2, "Dumbbell overhead extension", "60-90 sec", 90]
+          {
+            name: "Smith or barbell squat",
+            reps: "6-10",
+            sets: 3,
+            rir: "2-3",
+            alternative: "Leg press",
+            rest: "2-3 min",
+            restSeconds: 180,
+            kind: "lower-compound"
+          },
+          {
+            name: "Dumbbell or Smith bench press",
+            reps: "6-10",
+            sets: 3,
+            rir: "1-3",
+            alternative: "Machine chest press",
+            rest: "2 min",
+            restSeconds: 120,
+            kind: "compound"
+          },
+          {
+            name: "Chest-supported dumbbell or machine row",
+            reps: "8-12",
+            sets: 3,
+            rir: "1-3",
+            alternative: "Seated cable row",
+            rest: "2 min",
+            restSeconds: 120,
+            kind: "compound"
+          },
+          {
+            name: "Smith or dumbbell Romanian deadlift",
+            reps: "8-10",
+            sets: 3,
+            rir: "2-3",
+            alternative: "Machine leg curl",
+            rest: "2-3 min",
+            restSeconds: 180,
+            kind: "lower-compound"
+          },
+          {
+            name: "Dumbbell or cable lateral raise",
+            reps: "12-20",
+            sets: 2,
+            rir: "1-3",
+            alternative: "Machine lateral raise",
+            rest: "60-90 sec",
+            restSeconds: 90,
+            kind: "accessory"
+          },
+          {
+            name: "Standing calf raise",
+            reps: "10-20",
+            sets: 2,
+            rir: "1-3",
+            alternative: "Leg-press calf raise",
+            rest: "60-90 sec",
+            restSeconds: 90,
+            kind: "accessory"
+          }
         ]
       },
       B: {
-        title: "Session B - Full Body A",
+        title: "Full Body B - Thursday",
         exercises: [
-          ["Smith or barbell squat", "6-10", 3, "Leg press", "2-3 min", 180],
-          ["Incline dumbbell press", "8-12", 3, "Smith incline press", "2 min", 120],
-          ["Lat pulldown or machine row", "8-12", 3, "Chest-supported dumbbell row", "90-120 sec", 120],
-          ["Smith or dumbbell Romanian deadlift", "8-10", 3, "Machine leg curl", "2-3 min", 180],
-          ["Dumbbell lateral raise", "12-20", 2, "Cable lateral raise", "60 sec", 60],
-          ["Standing calf raise", "10-20", 2, "Leg-press calf raise", "60 sec", 60]
-        ]
-      },
-      C: {
-        title: "Session C - Full Body B",
-        exercises: [
-          ["Leg press", "8-12", 3, "Bulgarian split squat", "2-3 min", 180],
-          ["Machine or dumbbell chest press", "8-12", 3, "Smith bench press", "2 min", 120],
-          ["Chest-supported dumbbell or machine row", "8-12", 3, "Seated cable row", "2 min", 120],
-          ["Machine leg curl", "10-15", 3, "Dumbbell Romanian deadlift", "90 sec", 90],
-          ["Machine leg extension", "10-15", 2, "Goblet squat", "60-90 sec", 90],
-          ["Plank, cable crunch, or ab wheel", "Controlled", 2, "Any controlled trunk exercise", "60 sec", 60]
+          {
+            name: "Leg press",
+            reps: "8-12",
+            sets: 3,
+            rir: "2-3",
+            alternative: "Bulgarian split squat",
+            rest: "2-3 min",
+            restSeconds: 180,
+            kind: "lower-compound"
+          },
+          {
+            name: "Incline dumbbell press",
+            reps: "8-12",
+            sets: 3,
+            rir: "1-3",
+            alternative: "Smith incline press",
+            rest: "2 min",
+            restSeconds: 120,
+            kind: "compound"
+          },
+          {
+            name: "Lat pulldown",
+            reps: "8-12",
+            sets: 3,
+            rir: "1-3",
+            alternative: "Assisted pull-up",
+            rest: "2 min",
+            restSeconds: 120,
+            kind: "compound"
+          },
+          {
+            name: "Machine leg curl",
+            reps: "10-15",
+            sets: 3,
+            rir: "2-3",
+            alternative: "Light dumbbell Romanian deadlift",
+            rest: "90-120 sec",
+            restSeconds: 120,
+            kind: "lower-compound"
+          },
+          {
+            name: "Seated dumbbell shoulder press",
+            reps: "8-12",
+            sets: 2,
+            rir: "1-3",
+            alternative: "Machine shoulder press",
+            rest: "90 sec",
+            restSeconds: 90,
+            kind: "compound"
+          },
+          {
+            name: "Dumbbell/cable curl",
+            reps: "10-15",
+            sets: 2,
+            rir: "1-3",
+            alternative: "Machine curl",
+            rest: "60-90 sec",
+            restSeconds: 90,
+            kind: "accessory"
+          },
+          {
+            name: "Cable triceps pressdown",
+            reps: "10-15",
+            sets: 2,
+            rir: "1-3",
+            alternative: "Dumbbell overhead extension",
+            rest: "60-90 sec",
+            restSeconds: 90,
+            kind: "accessory"
+          },
+          {
+            name: "Seated calf raise",
+            reps: "10-20",
+            sets: 2,
+            rir: "1-3",
+            alternative: "Standing calf raise",
+            rest: "60 sec",
+            restSeconds: 60,
+            kind: "accessory"
+          },
+          {
+            name: "Plank, cable crunch, or ab wheel",
+            reps: "Controlled",
+            sets: 2,
+            rir: "2-3",
+            alternative: "Any controlled trunk exercise",
+            rest: "60 sec",
+            restSeconds: 60,
+            kind: "accessory"
+          }
         ]
       }
     };
 
-    const draftKey = "gym-tracker-draft-v1";
+    const legacyExerciseNames = {
+      "Dumbbell or cable lateral raise": ["Dumbbell lateral raise"],
+      "Lat pulldown": ["Lat pulldown or machine row"]
+    };
+    const draftKey = "gym-tracker-draft-v2";
     const historyKey = "gym-tracker-history-v1";
     const timerKey = "gym-tracker-timer-v1";
     const restKey = "gym-tracker-rest-v1";
@@ -488,7 +641,7 @@
 
     function startRest(exerciseIndex, setIndex) {
       const plan = plans[draft.type].exercises[exerciseIndex];
-      const seconds = plan[5];
+      const seconds = plan.restSeconds;
       const exercise = draft.exercises[exerciseIndex];
       exercise.done = exercise.done || [false, false, false];
       exercise.done[setIndex] = true;
@@ -550,18 +703,24 @@
       return JSON.parse(localStorage.getItem(historyKey) || "[]");
     }
 
-    function previousSession(type) {
-      return history().find((entry) => entry.type === type);
+    function previousExercise(name) {
+      const matchingNames = new Set([name, ...(legacyExerciseNames[name] || [])]);
+      for (const entry of history()) {
+        const exercise = entry.exercises?.find((item) => matchingNames.has(item.name));
+        if (exercise) return exercise;
+      }
+      return null;
     }
 
-    function blankExercise([name]) {
+    function blankExercise({ name }) {
       return { name, load: "", reps: ["", "", ""], rir: "", notes: "", done: [false, false, false] };
     }
 
-    function defaultDraft(type = "B") {
+    function defaultDraft(type = "A") {
       return {
+        programId,
         type,
-        phase: "reentry",
+        phase: "week1",
         date: today(),
         sessionRpe: "",
         readiness: "",
@@ -573,16 +732,18 @@
 
     function loadDraft() {
       const saved = JSON.parse(localStorage.getItem(draftKey) || "null");
-      if (!saved || !plans[saved.type]) return defaultDraft();
+      if (!saved || saved.programId !== programId || !plans[saved.type]) return defaultDraft();
 
       return {
         ...saved,
-        exercises: plans[saved.type].exercises.map((planExercise, index) => {
-          const existing = saved.exercises?.[index] || {};
+        programId,
+        phase: phases[saved.phase] ? saved.phase : "week1",
+        exercises: plans[saved.type].exercises.map((planExercise) => {
+          const existing = saved.exercises?.find((exercise) => exercise.name === planExercise.name) || {};
           return {
             ...blankExercise(planExercise),
             ...existing,
-            name: planExercise[0],
+            name: planExercise.name,
             reps: Array.isArray(existing.reps) ? existing.reps : ["", "", ""],
             done: Array.isArray(existing.done) ? existing.done : [false, false, false]
           };
@@ -593,28 +754,51 @@
     let draft = loadDraft();
 
     function activeSetCount(exerciseIndex) {
-      if (draft.phase === "reentry") return 2;
-      return plans[draft.type].exercises[exerciseIndex][2];
+      const exercise = plans[draft.type].exercises[exerciseIndex];
+      if (draft.phase === "week1") return exercise.kind === "lower-compound" ? 1 : 2;
+      if (draft.phase === "week2") return 2;
+      if (draft.phase === "week3") return exercise.kind === "lower-compound" ? 2 : exercise.sets;
+      if (draft.phase === "taper") return draft.type === "A" ? Math.min(2, exercise.sets) : 0;
+      return exercise.sets;
+    }
+
+    function targetRir(exercise) {
+      if (draft.phase === "week1") return "4-5";
+      if (draft.phase === "week2") return "3-4";
+      if (draft.phase === "week3") return exercise.kind === "accessory" ? "2-3" : "3";
+      if (draft.phase === "taper") return "4";
+      return exercise.rir;
+    }
+
+    function sessionIsSkipped() {
+      return draft.phase === "taper" && draft.type === "B";
     }
 
     function renderExercises() {
-      const previous = previousSession(draft.type);
       $("sessionTitle").textContent = plans[draft.type].title;
+      $("phaseNote").textContent = phases[draft.phase].note;
+      if (sessionIsSkipped()) {
+        $("exerciseList").innerHTML = '<p class="muted">No exercises are scheduled. Thursday is complete rest during the running time-trial week.</p>';
+        return;
+      }
+
       $("exerciseList").innerHTML = draft.exercises.map((exercise, index) => {
-        const prior = previous?.exercises?.find((item) => item.name === exercise.name);
+        const exercisePlan = plans[draft.type].exercises[index];
+        const prior = previousExercise(exercise.name);
         const priorText = prior
           ? `${text(prior.load)} · ${prior.reps.filter(Boolean).join("/")} reps · RIR ${text(prior.rir)}`
           : "No prior session";
         const setCount = activeSetCount(index);
+        const repTarget = exercisePlan.reps === "Controlled" ? exercisePlan.reps : `${exercisePlan.reps} reps`;
         return `
           <div class="exercise" data-index="${index}">
             <div class="exercise-head">
               <div>
                 <div class="exercise-name">${exercise.name}</div>
-                <div class="previous">Alternative: ${plans[draft.type].exercises[index][3]}</div>
+                <div class="previous">Alternative: ${exercisePlan.alternative}</div>
                 <div class="previous">Previous: ${priorText}</div>
               </div>
-              <div class="target">${plans[draft.type].exercises[index][1]} reps · ${draft.phase === "reentry" ? "3" : plans[draft.type].exercises[index][2] === 3 ? "2-3" : "1-2"} RIR<br>Rest ${plans[draft.type].exercises[index][4]}</div>
+              <div class="target">${repTarget} · ${targetRir(exercisePlan)} RIR<br>Rest ${exercisePlan.rest}</div>
             </div>
             <div class="set-grid">
               <label>Load<input data-field="load" value="${exercise.load}" placeholder="kg/lb"></label>
@@ -658,13 +842,20 @@
     }
 
     function changeSession(type) {
+      const phase = draft.phase;
       draft = defaultDraft(type);
+      draft.phase = phase;
       saveDraft();
       syncForm();
       hideSummary();
     }
 
     function collectSummary() {
+      if (sessionIsSkipped()) {
+        alert("Full Body B is skipped during the running time-trial week.");
+        return;
+      }
+
       const elapsed = currentElapsed();
       $("summaryTitle").textContent = plans[draft.type].title;
       $("summaryDate").textContent = draft.date;
@@ -696,6 +887,11 @@
     }
 
     function saveCompletedSession() {
+      if (sessionIsSkipped()) {
+        alert("Full Body B is skipped during the running time-trial week.");
+        return;
+      }
+
       const completed = {
         ...draft,
         durationMs: currentElapsed(),
@@ -719,6 +915,7 @@
 
     function exportData() {
       const data = {
+        programId,
         exportedAt: new Date().toISOString(),
         draft,
         history: history()
@@ -736,10 +933,15 @@
       const data = JSON.parse(await file.text());
       if (!Array.isArray(data.history) || !data.draft) throw new Error("Invalid backup file");
       localStorage.setItem(historyKey, JSON.stringify(data.history));
-      localStorage.setItem(draftKey, JSON.stringify(data.draft));
+      const currentDraft = data.draft.programId === programId && plans[data.draft.type];
+      if (currentDraft) {
+        localStorage.setItem(draftKey, JSON.stringify(data.draft));
+      } else {
+        localStorage.removeItem(draftKey);
+      }
       draft = loadDraft();
       syncForm();
-      alert("Backup imported.");
+      alert(currentDraft ? "Backup imported." : "History imported. The retired-program draft was not restored.");
     }
 
     $("timerToggle").addEventListener("click", toggleTimer);
