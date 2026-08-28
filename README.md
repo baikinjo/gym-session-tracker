@@ -7,6 +7,7 @@ A dependency-free personal gym logger designed for iPhone Safari and GitHub Page
 - Full Body A and Full Body B from the active two-day gym plan
 - Week 1 priming, Week 2 restoration, Week 3 volume ramp, normal training, and running-TT taper phases
 - Phase-specific working-set and RIR targets
+- Pound-only weight entry and display
 - Autosaved draft and session timer
 - Per-set completion buttons with exercise-specific rest countdowns
 - Previous matching exercise shown across current and retired-program history

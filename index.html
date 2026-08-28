@@ -93,7 +93,19 @@
       font-size: 16px;
     }
 
-    input[type="date"] { display: block; }
+    input[type="date"] {
+      display: block;
+      min-width: 0;
+      overflow: hidden;
+      -webkit-appearance: none;
+      appearance: none;
+      text-align: left;
+    }
+
+    input[type="date"]::-webkit-date-and-time-value {
+      margin: 0;
+      text-align: left;
+    }
 
     input:focus, select:focus, textarea:focus { border-color: var(--accent); }
     textarea { min-height: 72px; resize: vertical; }
@@ -138,6 +150,7 @@
       font-size: .78rem;
       font-variant-numeric: tabular-nums;
       font-weight: 750;
+      white-space: nowrap;
     }
 
     .rest-timer.active { color: var(--accent); }
@@ -177,7 +190,7 @@
 
     .set-grid {
       display: grid;
-      grid-template-columns: 1.25fr repeat(3, .7fr) .7fr;
+      grid-template-columns: minmax(0, 1.25fr) repeat(var(--set-count), minmax(0, .7fr)) minmax(0, .7fr);
       gap: 6px;
       align-items: end;
     }
@@ -188,7 +201,7 @@
 
     .set-actions {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(var(--set-count), minmax(0, 1fr));
       gap: 6px;
       margin-top: 8px;
     }
@@ -257,7 +270,10 @@
 
     @media (max-width: 520px) {
       .grid { grid-template-columns: 1fr; }
-      .set-grid { grid-template-columns: 1.2fr repeat(3, .72fr) .72fr; }
+      h1 { font-size: 1.3rem; }
+      .set-grid {
+        grid-template-columns: minmax(0, 1.2fr) repeat(var(--set-count), minmax(0, .72fr)) minmax(0, .72fr);
+      }
       .app { padding-inline: 10px; }
       .card { padding: 11px; }
     }
@@ -368,7 +384,7 @@
         <thead>
           <tr>
             <th>Exercise</th>
-            <th>Load</th>
+            <th>Weight (lb)</th>
             <th>S1</th>
             <th>S2</th>
             <th>S3</th>
@@ -398,13 +414,13 @@
     const programId = "fresh-start-2026";
     const phases = {
       week1: {
-        note: "Upper body uses 2 sets; squat, Romanian deadlift, leg press, and leg curl use 1 set. Keep 4-5 RIR, use conservative loads, and do not progress."
+        note: "Keep 4-5 RIR, start about 20-30% below known prior loads, and do not progress."
       },
       week2: {
         note: "Use 2 sets for every exercise at 3-4 RIR. Hold the load if Week 1 caused more than mild soreness."
       },
       week3: {
-        note: "Use listed upper-body sets; keep the four lower-body compounds at 2 sets. Compounds stay at 3 RIR and accessories at 2-3 RIR."
+        note: "Use 3 RIR for compounds and 2-3 RIR for accessories."
       },
       normal: {
         note: "Use the listed sets and RIR. Double progression applies only after two consecutive top-of-range exposures."
@@ -589,7 +605,7 @@
     const text = (value, fallback = "-") => String(value || "").trim() || fallback;
 
     let timerState = JSON.parse(localStorage.getItem(timerKey) || '{"running":false,"elapsed":0,"startedAt":null}');
-    let restState = JSON.parse(localStorage.getItem(restKey) || '{"endAt":null,"label":"","notified":false}');
+    let restState = JSON.parse(localStorage.getItem(restKey) || '{"endAt":null,"label":"","displayLabel":"","notified":false}');
 
     function today() {
       const date = new Date();
@@ -623,14 +639,16 @@
       }
 
       const remaining = Math.max(0, restState.endAt - Date.now());
+      const legacySet = String(restState.label || "").match(/S(\d+)$/);
+      const displayLabel = restState.displayLabel || (legacySet ? `S${legacySet[1]} rest` : restState.label);
       $("restClear").classList.remove("hidden");
       if (remaining > 0) {
-        $("restTimer").textContent = `${restState.label}: ${formatDuration(remaining).slice(3)}`;
+        $("restTimer").textContent = `${displayLabel}: ${formatDuration(remaining).slice(3)}`;
         $("restTimer").className = "rest-timer active";
         return;
       }
 
-      $("restTimer").textContent = `${restState.label}: rest complete`;
+      $("restTimer").textContent = `${displayLabel}: complete`;
       $("restTimer").className = "rest-timer complete";
       if (!restState.notified) {
         restState.notified = true;
@@ -648,6 +666,7 @@
       restState = {
         endAt: Date.now() + seconds * 1000,
         label: `${exercise.name} S${setIndex + 1}`,
+        displayLabel: `S${setIndex + 1} rest`,
         notified: false
       };
       localStorage.setItem(restKey, JSON.stringify(restState));
@@ -672,7 +691,7 @@
     }
 
     function clearRestTimer() {
-      restState = { endAt: null, label: "", notified: false };
+      restState = { endAt: null, label: "", displayLabel: "", notified: false };
       localStorage.setItem(restKey, JSON.stringify(restState));
       updateRestTimer();
     }
@@ -701,6 +720,13 @@
 
     function history() {
       return JSON.parse(localStorage.getItem(historyKey) || "[]");
+    }
+
+    function formatWeight(value, fallback = "-") {
+      const raw = String(value || "").trim();
+      if (!raw) return fallback;
+      const numeric = raw.match(/^(\d+(?:\.\d+)?)\s*(?:lb|lbs)?$/i);
+      return numeric ? `${numeric[1]} lb` : raw;
     }
 
     function previousExercise(name) {
@@ -774,9 +800,22 @@
       return draft.phase === "taper" && draft.type === "B";
     }
 
+    function currentPhaseNote() {
+      const lowerBodyExercises = draft.type === "A"
+        ? "Squat and Romanian deadlift"
+        : "Leg press and leg curl";
+      if (draft.phase === "week1") {
+        return `${lowerBodyExercises}: 1 set. All others: 2 sets. ${phases.week1.note}`;
+      }
+      if (draft.phase === "week3") {
+        return `${lowerBodyExercises}: 2 sets. Use listed sets for all others. ${phases.week3.note}`;
+      }
+      return phases[draft.phase].note;
+    }
+
     function renderExercises() {
       $("sessionTitle").textContent = plans[draft.type].title;
-      $("phaseNote").textContent = phases[draft.phase].note;
+      $("phaseNote").textContent = currentPhaseNote();
       if (sessionIsSkipped()) {
         $("exerciseList").innerHTML = '<p class="muted">No exercises are scheduled. Thursday is complete rest during the running time-trial week.</p>';
         return;
@@ -786,7 +825,7 @@
         const exercisePlan = plans[draft.type].exercises[index];
         const prior = previousExercise(exercise.name);
         const priorText = prior
-          ? `${text(prior.load)} · ${prior.reps.filter(Boolean).join("/")} reps · RIR ${text(prior.rir)}`
+          ? `${formatWeight(prior.load)} · ${prior.reps.filter(Boolean).join("/")} reps · RIR ${text(prior.rir)}`
           : "No prior session";
         const setCount = activeSetCount(index);
         const repTarget = exercisePlan.reps === "Controlled" ? exercisePlan.reps : `${exercisePlan.reps} reps`;
@@ -800,16 +839,16 @@
               </div>
               <div class="target">${repTarget} · ${targetRir(exercisePlan)} RIR<br>Rest ${exercisePlan.rest}</div>
             </div>
-            <div class="set-grid">
-              <label>Load<input data-field="load" value="${exercise.load}" placeholder="kg/lb"></label>
+            <div class="set-grid" style="--set-count: ${setCount}">
+              <label>Weight (lb)<input data-field="load" inputmode="decimal" value="${exercise.load}" placeholder="0"></label>
               ${[0, 1, 2].map((set) => `
                 <label class="${set >= setCount ? "hidden" : ""}">S${set + 1}
                   <input data-rep="${set}" type="number" min="0" inputmode="numeric" value="${exercise.reps[set]}" placeholder="-">
                 </label>
               `).join("")}
-              <label>RIR<input data-field="rir" type="number" min="0" max="10" inputmode="numeric" value="${exercise.rir}" placeholder="3"></label>
+              <label>RIR<input data-field="rir" type="number" min="0" max="10" inputmode="numeric" value="${exercise.rir}" placeholder="${targetRir(exercisePlan)}"></label>
             </div>
-            <div class="set-actions">
+            <div class="set-actions" style="--set-count: ${setCount}">
               ${[0, 1, 2].map((set) => `
                 <button
                   class="${set >= setCount ? "hidden" : ""} ${exercise.done?.[set] ? "completed" : ""}"
@@ -870,7 +909,7 @@
         return `
           <tr>
             <td>${exercise.name}</td>
-            <td>${text(exercise.load)}</td>
+            <td>${formatWeight(exercise.load)}</td>
             <td>${reps[0]}</td>
             <td>${reps[1]}</td>
             <td>${reps[2]}</td>
