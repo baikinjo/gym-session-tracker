@@ -42,11 +42,21 @@
     }
 
     header {
+      position: sticky;
+      top: calc(env(safe-area-inset-top) + 8px);
+      z-index: 20;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
       margin-bottom: 14px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(17, 24, 39, .96);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .28);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
     }
 
     h1, h2, h3, p { margin-top: 0; }
@@ -281,6 +291,7 @@
     @media print {
       body { background: #fff; }
       .app { width: 100%; padding: 0; }
+      header { position: static; }
       body.summary-mode > .app > :not(.summary) { display: none !important; }
       .summary { display: block; border: 0; margin: 0; }
     }

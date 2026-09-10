@@ -10,6 +10,7 @@ A dependency-free personal gym logger designed for iPhone Safari and GitHub Page
 - Pound-only weight entry and display
 - Autosaved draft and session timer
 - Per-set completion buttons with exercise-specific rest countdowns
+- Sticky session and rest timers while scrolling through exercises
 - Previous matching exercise shown across current and retired-program history
 - Compact completed-session summary for screenshots
 - Local JSON backup and restore
