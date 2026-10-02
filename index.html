@@ -326,8 +326,8 @@
             <option value="week1">Week 1: priming</option>
             <option value="week2">Week 2: restore two sets</option>
             <option value="week3">Week 3: volume ramp</option>
-            <option value="normal">Weeks 4-5: normal training</option>
-            <option value="taper">Week 6: TT taper</option>
+            <option value="normal" selected>Normal training</option>
+            <option value="taper">Optional 5K taper - gate passed</option>
           </select>
         </label>
         <label>
@@ -437,7 +437,7 @@
         note: "Use the listed sets and RIR. Double progression applies only after two consecutive top-of-range exposures."
       },
       taper: {
-        note: "Tuesday Full Body A uses 1-2 sets at 4 RIR with no more than the prior load. Thursday Full Body B is skipped."
+        note: "Use only after the optional 5K gate passes and the athlete chooses the benchmark. Tuesday Full Body A uses 1-2 sets at 4 RIR with no more than the prior load. Thursday Full Body B is skipped."
       }
     };
 
@@ -757,7 +757,7 @@
       return {
         programId,
         type,
-        phase: "week1",
+        phase: "normal",
         date: today(),
         sessionRpe: "",
         readiness: "",
@@ -774,7 +774,7 @@
       return {
         ...saved,
         programId,
-        phase: phases[saved.phase] ? saved.phase : "week1",
+        phase: phases[saved.phase] ? saved.phase : "normal",
         exercises: plans[saved.type].exercises.map((planExercise) => {
           const existing = saved.exercises?.find((exercise) => exercise.name === planExercise.name) || {};
           return {
