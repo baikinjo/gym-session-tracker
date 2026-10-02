@@ -21,6 +21,8 @@ Completed history from the retired three-day plan remains available, while its d
 
 Normal training is the default phase. Select the optional 5K taper only after the running plan's readiness gate passes and the athlete chooses the benchmark; otherwise Full Body A and Full Body B both remain at normal volume.
 
+The Full Body A/B exercise roster and target sets continue through Cycle 4. Exercise variation is not scheduled for novelty; use the listed alternatives only for pain, equipment constraints, poor movement fit, or a three-exposure progression stall.
+
 ## Run locally
 
 ```powershell

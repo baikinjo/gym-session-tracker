@@ -1,4 +1,4 @@
-const cacheName = "gym-session-tracker-v9";
+const cacheName = "gym-session-tracker-v10";
 const assets = ["./", "index.html", "manifest.webmanifest", "icon.svg"];
 
 self.addEventListener("install", (event) => {
